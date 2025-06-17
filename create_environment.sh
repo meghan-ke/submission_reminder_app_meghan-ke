@@ -3,24 +3,14 @@ read -p "What is your name :" yourname
 var="submission_reminder_${yourname}"
 mkdir -p "$var"
 mkdir -p "$var/app" "$var/modules" "$var/assets" "$var/config"
-cat << EOF > "$var/app/reminder.sh"
-#!/bin/bash
 
-# Source environment variables and helper functions
-source ../config/config.env
-source ../modules/functions.sh
-
-# Path to the submissions file
-submissions_file="./assets/submissions.txt"
-
-# Print remaining time and run the reminder function
-echo "Assignment: $ASSIGNMENT"
-echo "Days remaining to submit: $DAYS_REMAINING days"
-echo "--------------------------------------------"
-
-check_submissions $submissions_file
+cat > "${var}/config/config.env" << 'EOF'
+# This is the config file
+ASSIGNMENT="Shell Navigation"
+DAYS_REMAINING=2
 EOF
-cat << EOF > "$var/modules/functions.sh"
+
+cat > "${var}/modules/functions.sh" << 'EOF'
 #!/bin/bash
 
 # Function to read submissions file and output students who have not submitted
@@ -42,7 +32,34 @@ function check_submissions {
     done < <(tail -n +2 "$submissions_file") # Skip the header
 }
 EOF
-cat << EOF > "$var/assets/submissions.txt"
+
+cat > "${var}/app/reminder.sh" << 'EOF'
+#!/bin/bash
+
+# Source environment variables and helper functions
+source ./config/config.env
+source ./modules/functions.sh
+
+# Path to the submissions file
+submissions_file="./assets/submissions.txt"
+
+# Print remaining time and run the reminder function
+echo "Assignment: $ASSIGNMENT"
+echo "Days remaining to submit: $DAYS_REMAINING days"
+echo "--------------------------------------------"
+
+check_submissions $submissions_file
+EOF
+
+cat > "${var}/startup.sh" << 'EOF'
+#!/bin/bash
+
+./app/reminder.sh
+
+echo "Start reminder app .."
+EOF
+
+cat > "${var}/assets/submissions.txt" << 'EOF'
 student, assignment, submission status
 Chinemerem, Shell Navigation, not submitted
 Chiagoziem, Git, submitted
@@ -55,17 +72,7 @@ Jospin, Shell Basics, not submitted
 marie, Shell Basics, submitted
 Sarah, Shell Basics, not submitted
 EOF
-cat << EOF > "$var/config/config.env"
-# This is the config file
-ASSIGNMENT="Shell Navigation"
-DAYS_REMAINING=2# 
-EOF
-cat << EOF > "$var/startup.sh"
-#!/bin/bash
-source /config/config.env
-source /modules/functions.sh
-./$var/app/reminder.sh
-EOF
-chmod +x *.sh
+
+find "$var" -type f -name "*.sh" -exec chmod +x {} \;
 
 echo "The working directory has been successfullly created in $var"
